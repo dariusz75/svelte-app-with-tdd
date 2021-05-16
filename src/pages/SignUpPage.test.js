@@ -1,6 +1,7 @@
 import { render, screen, cleanup, } from '@testing-library/svelte';
 import userEvent from "@testing-library/user-event";
 import '@testing-library/jest-dom';
+import axios from 'axios';
 
 import SignUpPage from './SignUpPage.svelte';
 
@@ -104,6 +105,37 @@ describe('Sign Up Page', () => {
       await userEvent.type(passwordInput, 'testPassword');
       await userEvent.type(repeatPasswordInput, 'testPassword');
       expect(button).toBeEnabled();
+    })
+
+    //testing click event on button
+    test('will send username, email and password to tne backend on button click', async ()=>{
+      render(SignUpPage);
+      const usernameInput = screen.getByLabelText('Username');
+      const emailInput = screen.getByLabelText('Email');
+      const passwordInput = screen.getByLabelText('Password');
+      const repeatPasswordInput = screen.getByLabelText('Repeat Password');
+      const button = screen.getByRole('button', {name: 'Sign Up'});
+
+      await userEvent.type(usernameInput, 'testUser');
+      await userEvent.type(emailInput, 'test@email.com');
+      await userEvent.type(passwordInput, 'testPassword');
+      await userEvent.type(repeatPasswordInput, 'testPassword');
+
+      const mockedApiCalls = jest.fn();
+
+      axios.post = mockedApiCalls;
+      
+      await userEvent.click(button);
+      
+      const firstCall = mockedApiCalls.mock.calls[0];
+      const url = firstCall[0];
+      const body = firstCall[1];
+
+      expect(body).toEqual({
+        username: 'testUser',
+        email: 'test@email.com',
+        password: 'testPassword',
+      })
     })
 
   })
