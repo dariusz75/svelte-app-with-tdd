@@ -110,8 +110,7 @@ describe('Sign Up Page', () => {
       expect(button).toBeEnabled();
     })
 
-    //testing click event on button
-    test('will send username, email and password to tne backend on button click', async ()=>{
+    test('will send username, email and password to tne backend on button click', async () => {
       render(SignUpPage);
      
       let requestBody;
@@ -144,6 +143,86 @@ describe('Sign Up Page', () => {
         email: 'test@email.com',
         password: 'testPassword',
       });
+    });
+
+    test('will display button if there is ongoing API call', async () => {
+      render(SignUpPage);
+     
+      let counter = 0;
+      const server = setupServer(
+        rest.post("/api/1.0/users", (req, res, ctx) => {
+          counter += 1;
+          return res(ctx.status(200));
+        })
+      );
+
+      server.listen();
+
+      const usernameInput = screen.getByLabelText('Username');
+      const emailInput = screen.getByLabelText('Email');
+      const passwordInput = screen.getByLabelText('Password');
+      const repeatPasswordInput = screen.getByLabelText('Repeat Password');
+      const button = screen.getByRole('button', {name: 'Sign Up'});
+
+      await userEvent.type(usernameInput, 'testUser');
+      await userEvent.type(emailInput, 'test@email.com');
+      await userEvent.type(passwordInput, 'testPassword');
+      await userEvent.type(repeatPasswordInput, 'testPassword');
+      
+      await userEvent.click(button);
+      await userEvent.click(button);
+
+      await server.close();
+      
+      expect(counter).toBe(1);
+    });
+
+    test('will display spinner while there is API call in progress', async () => {
+      render(SignUpPage);
+     
+      const server = setupServer(
+        rest.post("/api/1.0/users", (req, res, ctx) => {
+          return res(ctx.status(200));
+        })
+      );
+
+      server.listen();
+
+      const usernameInput = screen.getByLabelText('Username');
+      const emailInput = screen.getByLabelText('Email');
+      const passwordInput = screen.getByLabelText('Password');
+      const repeatPasswordInput = screen.getByLabelText('Repeat Password');
+      const button = screen.getByRole('button', {name: 'Sign Up'});
+
+      await userEvent.type(usernameInput, 'testUser');
+      await userEvent.type(emailInput, 'test@email.com');
+      await userEvent.type(passwordInput, 'testPassword');
+      await userEvent.type(repeatPasswordInput, 'testPassword');
+      
+      
+      await userEvent.click(button);
+
+      await server.close();
+      const spinner = screen.getByRole('status');
+      expect(spinner).toBeInTheDocument();
+    });
+
+    test('will not display spinner if there is no API call in progress', async () => {
+      render(SignUpPage);
+
+      const usernameInput = screen.getByLabelText('Username');
+      const emailInput = screen.getByLabelText('Email');
+      const passwordInput = screen.getByLabelText('Password');
+      const repeatPasswordInput = screen.getByLabelText('Repeat Password');
+
+      await userEvent.type(usernameInput, 'testUser');
+      await userEvent.type(emailInput, 'test@email.com');
+      await userEvent.type(passwordInput, 'testPassword');
+      await userEvent.type(repeatPasswordInput, 'testPassword');
+
+      const spinner = screen.queryByRole('status');
+      
+      expect(spinner).not.toBeInTheDocument();
     });
 
   });

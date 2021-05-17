@@ -6,11 +6,14 @@
   let password;
   let repetedPassword;
   let disabled = true;
+  let apiProgress = false;
 
   $: disabled = (password && repetedPassword) ? password !== repetedPassword : true;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    apiProgress = true;
+    disabled = true;
     axios.post('/api/1.0/users', { username, email, password });
   }
 
@@ -38,7 +41,12 @@
         <input id="repeatPassword" class="form-control" type="password" data-testid="password" bind:value={repetedPassword} />
       </div>
       <div class="text-center">
-        <button class="btn btn-primary" {disabled} on:click={handleSubmit}>Sign Up</button>
+        <button class="btn btn-primary" {disabled} on:click={handleSubmit}>
+          {#if apiProgress }
+          <span class="spinner-border spinner-border-sm" role="status" data-testid="spinner"></span>
+          {/if}
+            Sign Up
+        </button>
       </div>
     </div>
   </form>
